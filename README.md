@@ -1,114 +1,165 @@
-# Авито — Классификация типа комнаты по изображению
-## Кейс 3 | МИФИ Практический курс 2025–2026
+# Avito Room Type Classification
+## Кейс 3 | МИФИ Практический курс 2025-2026
 
-19-класcовая классификация фотографий недвижимости. Метрика: **Macro F1-score**.
+Классификация фотографий недвижимости по типу комнаты.  
+Основная метрика: **Macro F1** (среднее по классам без весов).
+
+Проект прошел полный цикл: baseline -> очистка/расширение данных -> усиление бэкбона -> LR sweep -> TTA -> 3-fold CV -> финальный ансамблевый инференс.
+
+---
+
+## TL;DR по результатам
+
+- **Лучший single-model на val:** `0.7228` (`exp_convnext_base_class_focus_lr1e4`)
+- **Лучший CV fold:** `0.7704` (`exp_convnext_base_clean_lr1e4_fold3`)
+- **3-fold среднее:** `0.7559` (std `0.0135`)
+- **ConvNeXt-only val ensemble (weight fit on val):** `0.7543` (оптимистично)
+- **Финальный тестовый артефакт:** `outputs/ensemble_convnext_3fold_tta/submission.csv` (`48003` строк)
+
+---
+
+## Важные технические выводы
+
+- Низкий стартовый скор (`~0.006`) был вызван неверными путями к данным в конфигах.
+- Внешние данные в "сыром" виде ухудшали результат из-за domain shift.
+- Очистка внешних данных (domain filter + class cap) дала прирост.
+- `ConvNeXt` на GPU дал ключевой скачок качества.
+- TTA и fold-ensemble увеличили устойчивость относительно одиночного чекпоинта.
+
+---
+
+## Хронология экспериментов
+
+Все значения ниже — `Best val Macro F1`.
+
+### 1) Этап EfficientNet
+
+| Эксперимент | Конфиг | Macro F1 | Комментарий |
+|---|---|---:|---|
+| Baseline after path fix | `configs/baseline.yaml` | `0.5999` | Возврат к рабочему уровню |
+| Ratio filter | `configs/exp2_ratio_filter.yaml` | `0.5706` | Сильная потеря данных |
+| Weighted loss | `configs/exp3_weighted_loss.yaml` | `0.5963` | Около baseline |
+| Full train (raw external) | `configs/exp_full_train.yaml` | `0.5756` | Просадка из-за domain shift |
+| Full clean E1 | `configs/exp_full_train_clean_e1.yaml` | `0.6101` | Лучше baseline |
+| Full clean E2 weighted | `configs/exp_full_train_clean_e2.yaml` | `0.6087` | Чуть хуже E1 |
+| Full clean E1 160px | `configs/exp_full_train_clean_e1_160.yaml` | `0.5927` | Потеря деталей |
+
+### 2) Ранний ансамбль (до ConvNeXt)
+
+- `ensemble_b012_f017_e133_e238`: `0.6427` (валидационно)
+
+### 3) ConvNeXt / EVA этап
+
+| Эксперимент | Конфиг | Macro F1 | Комментарий |
+|---|---|---:|---|
+| ConvNeXt clean | `configs/exp_convnext_base_clean.yaml` | `0.6880` | Первый большой скачок |
+| ConvNeXt original | `configs/exp_convnext_base_original.yaml` | `0.6847` | Чуть хуже clean |
+| EVA02 small clean | `configs/exp_eva02_small_clean.yaml` | `0.5814` | Не взлетел в этой настройке |
+
+### 4) LR sweep для ConvNeXt
+
+| Конфиг | Macro F1 |
+|---|---:|
+| `configs/exp_convnext_base_clean_lr1e4.yaml` | `0.7176` |
+| `configs/exp_convnext_base_clean_lr1p5e4.yaml` | `0.7147` |
+| `configs/exp_convnext_base_clean_lr2e4.yaml` | `0.6893` |
+
+Выбран оптимальный LR: **`1e-4`**.
+
+### 5) TTA и ансамбли
+
+- Для `exp_convnext_base_clean_lr1e4`:
+  - single: `0.7176`
+  - flip-TTA: `0.7215`
+- ConvNeXt-only ensemble с подбором весов на val: `0.7543`
+
+### 6) Class-focused clean
+
+- `configs/exp_convnext_base_class_focus_lr1e4.yaml`: `0.7228`
+
+### 7) 3-fold CV (последние эксперименты)
+
+| Fold | Конфиг | Macro F1 |
+|---|---|---:|
+| 1 | `configs/exp_convnext_base_clean_lr1e4_fold1.yaml` | `0.7378` |
+| 2 | `configs/exp_convnext_base_clean_lr1e4_fold2.yaml` | `0.7595` |
+| 3 | `configs/exp_convnext_base_clean_lr1e4_fold3.yaml` | `0.7704` |
+
+Итого: **mean `0.7559`, std `0.0135`**.
+
+### 8) Финальный инференс (последний шаг)
+
+Скрипт `src/inference_ensemble_3fold.py`:
+- загружает 3 fold-модели ConvNeXt,
+- применяет flip-TTA,
+- усредняет logits,
+- сохраняет итоговый сабмит в `outputs/ensemble_convnext_3fold_tta/submission.csv`.
+
+---
+
+## Структура репозитория
+
+```text
+.
+├─ configs/                      # Все экспериментальные конфиги
+├─ scripts/
+│  ├─ build_full_train.py
+│  ├─ build_full_train_clean.py
+│  ├─ build_full_train_class_focus.py
+│  └─ run_convnext_3fold.py
+├─ src/
+│  ├─ train.py
+│  ├─ inference.py
+│  ├─ inference_ensemble_3fold.py
+│  ├─ dataset.py
+│  └─ model.py
+├─ outputs/
+│  └─ ensemble_convnext_3fold_tta/submission.csv
+├─ EXPERIMENT_REPORT.md          # Расширенный handover-отчет
+├─ run_baseline.py
+└─ requirements.txt
+```
 
 ---
 
 ## Быстрый старт
 
 ```bash
-# 1. Установить зависимости
+# Установка зависимостей
 pip install -r requirements.txt
+```
 
-# 2. EDA (графики сохраняются в outputs/eda/)
-python src/eda.py
+Windows (рекомендуемый запуск из `.venv`):
 
-# 3. Обучение baseline
-python run_baseline.py
+```powershell
+# Проверка CUDA
+& "c:\Users\Константин\Desktop\avito_hackaton\.venv\Scripts\python.exe" -c "import torch; print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0))"
 
-# 4. Инференс (генерация submission.csv)
-python src/inference.py \
-  --config configs/baseline.yaml \
-  --weights outputs/baseline_efficientnet_b0/best_model.pth
+# Baseline
+& "c:\Users\Константин\Desktop\avito_hackaton\.venv\Scripts\python.exe" run_baseline.py
+
+# Лучший single-model (class-focused ConvNeXt)
+& "c:\Users\Константин\Desktop\avito_hackaton\.venv\Scripts\python.exe" src/train.py --config configs/exp_convnext_base_class_focus_lr1e4.yaml
+
+# 3-fold CV
+& "c:\Users\Константин\Desktop\avito_hackaton\.venv\Scripts\python.exe" scripts/run_convnext_3fold.py
 ```
 
 ---
 
-## Структура данных
+## Данные и оговорки
 
-```
-data/
-├── train_df.csv              — 4562 размеченных изображения (Толока)
-├── val_df.csv                — 500 изображений
-├── test_df.csv               — 48003 изображения для предсказания
-├── room_type_sample_submission.csv
-├── train_images/train_images/   — изображения train
-├── val_images/val_images/       — изображения val
-├── test_images/test_images/     — изображения test
-├── heuristics_cabinet.csv    — доп. данные: кабинет (класс 5)
-├── heuristics_detskaya.csv   — доп. данные: детская (класс 6)
-└── heuristics_dressing_room.csv — доп. данные: гардеробная (класс 11)
-```
-
-**Важно:** в данных 20 классов (0–19), несмотря на то что задание описывает 19.  
-Классы с наименьшим числом примеров: 11 (59 шт.), 5 (74 шт.).
+- В исходной постановке фигурирует 19 классов, но в текущей разметке используется `0..19` (20 классов).
+- Самые сложные/редкие классы: кабинет, универсальная, предметы интерьера, гардеробная.
+- Метрики в репозитории — offline validation; public/private leaderboard может отличаться.
+- Val-оптимизированные ансамблевые веса могут завышать локальную оценку.
 
 ---
 
-## Классы
+## Финальный артефакт
 
-| ID | Название |
-|----|----------|
-| 0 | Кухня / столовая |
-| 1 | Кухня-гостиная |
-| 2 | Универсальная комната |
-| 3 | Гостиная |
-| 4 | Спальня |
-| 5 | Кабинет ⚠️ (74 примера) |
-| 6 | Детская |
-| 7 | Ванная комната |
-| 8 | Туалет |
-| 9 | Совмещённый санузел |
-| 10 | Коридор / прихожая |
-| 11 | Гардеробная / кладовая / постирочная ⚠️ (59 примеров) |
-| 12 | Балкон / лоджия |
-| 13 | Вид из окна / с балкона |
-| 14 | Дом снаружи / двор |
-| 15 | Подъезд / лестничная площадка |
-| 16 | Другое |
-| 17 | Предметы интерьера / бытовая техника |
-| 18 | Комната без мебели |
-| 19 | Комната без мебели (доп.) |
-
----
-
-## Эксперименты
-
-| # | Конфиг | Описание | Val Macro F1 | Баллы |
-|---|--------|----------|--------------|-------|
-| 1 | `configs/baseline.yaml` | EfficientNet-B0, 10 эпох, без балансировки | **0.6093** | 20/20 |
-| 2 | `configs/exp2_ratio_filter.yaml` | + фильтр ratio < 0.7 | — | — |
-| 3 | `configs/exp3_weighted_loss.yaml` | + взвешенный loss + WRS | — | — |
-| 4 | `configs/exp4_maxvit.yaml` | MaxViT-Tiny, фильтр + взвешенный | — | — |
-
-### Результаты baseline (Exp 1) по классам
-
-| Класс | Precision | Recall | F1 |
-|-------|-----------|--------|----|
-| балкон/лоджия | 1.00 | 0.74 | **0.85** |
-| вид из окна | 0.83 | 0.90 | **0.86** |
-| ванная | 0.83 | 0.83 | **0.83** |
-| подъезд | 0.79 | 0.79 | **0.79** |
-| дом снаружи | 0.70 | 0.86 | **0.78** |
-| кухня/столовая | 0.73 | 0.79 | **0.76** |
-| без мебели(19) | 0.77 | 0.74 | **0.76** |
-| туалет | 0.76 | 0.67 | 0.71 |
-| санузел | 0.78 | 0.68 | 0.72 |
-| гостиная | 0.73 | 0.63 | 0.68 |
-| коридор/прихожая | 0.78 | 0.62 | 0.69 |
-| спальня | 0.56 | 0.79 | 0.66 |
-| детская | 0.80 | 0.47 | 0.59 |
-| гардеробная | 0.73 | 0.46 | 0.56 |
-| другое | 0.47 | 0.54 | 0.50 |
-| кухня-гостиная | 0.44 | 0.44 | 0.44 |
-| **кабинет** ⚠️ | 0.50 | 0.23 | **0.31** ← цель |
-| **универсальная** ⚠️ | 0.35 | 0.35 | **0.35** ← цель |
-| **предметы интерьера** ⚠️ | 0.38 | 0.33 | **0.35** ← цель |
-
----
-
-## Формат submission
+- Текущий итоговый файл для отправки: `outputs/ensemble_convnext_3fold_tta/submission.csv`
+- Формат:
 
 ```csv
 image_id_ext,Predicted
@@ -116,7 +167,5 @@ image_id_ext,Predicted
 12346,7
 ```
 
-Файл генерируется командой `python src/inference.py`.
-
----
+Для детального пошагового отчета см. `EXPERIMENT_REPORT.md`.
 

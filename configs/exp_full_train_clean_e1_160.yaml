@@ -1,0 +1,31 @@
+# E1 variant: cleaner data + 160px for faster/stabler CPU training
+experiment_name: exp_full_train_clean_e1_160
+
+data_root: ..
+train_csv: data/train_df_full_clean.csv
+val_csv: ../val_df.csv
+test_csv: ../test_df.csv
+train_images_dir: ../train_images_full_clean/train_images_full_clean
+val_images_dir: ../val_images/val_images
+test_images_dir: ../test_images/test_images
+num_classes: 20
+
+min_ratio: 0.0
+
+model_name: efficientnet_b0
+pretrained: true
+dropout: 0.3
+
+img_size: 160
+batch_size: 32
+num_epochs: 20
+lr: 0.0004
+weight_decay: 0.0001
+label_smoothing: 0.05
+use_weighted_loss: false
+preload: true
+warmup_epochs: 2
+early_stopping_patience: 6
+
+seed: 42
+output_dir: outputs/exp_full_train_clean_e1_160

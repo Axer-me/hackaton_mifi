@@ -1,0 +1,36 @@
+# Baseline experiment — EfficientNet-B0, CPU-friendly
+experiment_name: baseline_efficientnet_b0
+
+# Data
+data_root: ..
+train_csv: ../train_df.csv
+val_csv: ../val_df.csv
+test_csv: ../test_df.csv
+train_images_dir: ../train_images/train_images
+val_images_dir: ../val_images/val_images
+test_images_dir: ../test_images/test_images
+num_classes: 20
+
+# Filter
+min_ratio: 0.0        # set to 0.6 to drop noisy labels (experiment 2)
+
+# Model
+model_name: efficientnet_b0
+pretrained: true
+dropout: 0.3
+
+# Training
+img_size: 160         # 160px — 2x faster than 224 on CPU (4x fewer pixels)
+batch_size: 32        # larger batch → fewer optimizer steps per epoch
+num_epochs: 15
+lr: 0.001
+weight_decay: 0.0001
+label_smoothing: 0.1
+use_weighted_loss: false    # set true for experiment 3
+preload: true              # preload all images to RAM — eliminates I/O bottleneck
+
+# Reproducibility
+seed: 42
+
+# Output
+output_dir: outputs/baseline_efficientnet_b0

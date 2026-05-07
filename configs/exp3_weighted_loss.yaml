@@ -1,0 +1,28 @@
+# Experiment 3 — Weighted loss + WeightedRandomSampler
+experiment_name: exp3_weighted_loss
+
+data_root: ..
+train_csv: ../train_df.csv
+val_csv: ../val_df.csv
+test_csv: ../test_df.csv
+train_images_dir: ../train_images/train_images
+val_images_dir: ../val_images/val_images
+test_images_dir: ../test_images/test_images
+num_classes: 20
+
+min_ratio: 0.0
+
+model_name: efficientnet_b0
+pretrained: true
+dropout: 0.3
+
+img_size: 224
+batch_size: 16
+num_epochs: 10
+lr: 0.001
+weight_decay: 0.0001
+label_smoothing: 0.1
+use_weighted_loss: true    # WeightedRandomSampler + weighted CE
+
+seed: 42
+output_dir: outputs/exp3_weighted_loss

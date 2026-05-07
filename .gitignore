@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Data — не коммитим (слишком большие файлы)
+data/train_images/
+data/val_images/
+data/test_images/
+data/heuristics_images/
+data/heuristics_cabinet.csv
+data/heuristics_detskaya.csv
+data/heuristics_dressing_room.csv
+data/__MACOSX/
+
+# Веса моделей (большие бинарные файлы)
+outputs/**/*.pth
+outputs/**/*.pt
+outputs/smoke_test/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Временные файлы (одиночное подчёркивание, не __init__)
+[^_]_*.py
+_[^_]*.py
+*.tmp

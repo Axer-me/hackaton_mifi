@@ -1,0 +1,38 @@
+# E1: Clean external data + lower LR + warmup
+experiment_name: exp_full_train_clean_e1
+
+# Data
+data_root: ..
+train_csv: data/train_df_full_clean.csv
+val_csv: ../val_df.csv
+test_csv: ../test_df.csv
+train_images_dir: ../train_images_full_clean/train_images_full_clean
+val_images_dir: ../val_images/val_images
+test_images_dir: ../test_images/test_images
+num_classes: 20
+
+# Filter
+min_ratio: 0.0
+
+# Model
+model_name: efficientnet_b0
+pretrained: true
+dropout: 0.3
+
+# Training
+img_size: 224
+batch_size: 16
+num_epochs: 15
+lr: 0.0003
+weight_decay: 0.0001
+label_smoothing: 0.05
+use_weighted_loss: false
+preload: true
+warmup_epochs: 2
+early_stopping_patience: 5
+
+# Reproducibility
+seed: 42
+
+# Output
+output_dir: outputs/exp_full_train_clean_e1

@@ -1,0 +1,36 @@
+# Experiment — full train set (base + team links)
+experiment_name: exp_full_train_efficientnet_b0
+
+# Data
+data_root: ..
+train_csv: data/train_df_full.csv
+val_csv: ../val_df.csv
+test_csv: ../test_df.csv
+train_images_dir: ../train_images_full/train_images_full
+val_images_dir: ../val_images/val_images
+test_images_dir: ../test_images/test_images
+num_classes: 20
+
+# Filter
+min_ratio: 0.0
+
+# Model
+model_name: efficientnet_b0
+pretrained: true
+dropout: 0.3
+
+# Training
+img_size: 160
+batch_size: 32
+num_epochs: 15
+lr: 0.001
+weight_decay: 0.0001
+label_smoothing: 0.1
+use_weighted_loss: false
+preload: true
+
+# Reproducibility
+seed: 42
+
+# Output
+output_dir: outputs/exp_full_train_efficientnet_b0

@@ -95,6 +95,30 @@
 - усредняет logits,
 - сохраняет итоговый сабмит в `outputs/ensemble_convnext_3fold_tta/submission.csv`.
 
+### 9) OOF stacking (новый практический шаг)
+
+Скрипт `scripts/stacking_convnext_3fold.py`:
+- собирает OOF вероятности с fold-валидаций,
+- обучает meta-model (`LogisticRegression`) поверх OOF,
+- делает test inference с multi-TTA и fold averaging,
+- применяет meta-model и сохраняет итоговый сабмит.
+
+Пример запуска:
+
+```powershell
+& "c:\Users\Константин\Desktop\avito_hackaton\.venv\Scripts\python.exe" scripts/stacking_convnext_3fold.py --tta none hflip scale_up scale_down
+```
+
+Артефакты:
+- `outputs/ensemble_convnext_3fold_stacking_tta/submission.csv`
+- `outputs/ensemble_convnext_3fold_stacking_tta/oof_meta.csv`
+- `outputs/ensemble_convnext_3fold_stacking_tta/meta_model.pkl`
+- `outputs/ensemble_convnext_3fold_stacking_tta/meta_info.json`
+
+Результат запуска:
+- `OOF macro F1 (meta model): 0.7565`
+- Это немного выше предыдущего `3-fold mean = 0.7559`
+
 ---
 
 ## Структура репозитория

@@ -1,0 +1,18 @@
+{
+  "fold_configs": [
+    "C:\\Users\\Константин\\Desktop\\avito_hackaton\\baseline\\configs\\exp_convnext_base_clean_lr1e4_fold1.yaml",
+    "C:\\Users\\Константин\\Desktop\\avito_hackaton\\baseline\\configs\\exp_convnext_base_clean_lr1e4_fold2.yaml",
+    "C:\\Users\\Константин\\Desktop\\avito_hackaton\\baseline\\configs\\exp_convnext_base_clean_lr1e4_fold3.yaml"
+  ],
+  "tta_modes": [
+    "none",
+    "hflip",
+    "scale_up",
+    "scale_down"
+  ],
+  "meta_c": 1.0,
+  "seed": 42,
+  "oof_macro_f1_meta": 0.7565167133953731,
+  "num_classes": 20,
+  "model_name": "convnext_base"
+}

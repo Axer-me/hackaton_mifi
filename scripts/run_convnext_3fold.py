@@ -9,8 +9,8 @@ from sklearn.model_selection import StratifiedKFold
 import yaml
 
 
-ROOT = Path(__file__).resolve().parents[2]
-BASELINE_DIR = ROOT / "baseline"
+ROOT = Path(__file__).resolve().parents[1]
+BASELINE_DIR = ROOT
 TRAIN_CSV = BASELINE_DIR / "data" / "train_df_full_clean.csv"
 OUT_DIR = BASELINE_DIR / "data" / "cv_splits"
 CFG_DIR = BASELINE_DIR / "configs"
@@ -35,13 +35,13 @@ def main() -> None:
 
         cfg = {
             "experiment_name": f"exp_convnext_base_clean_lr1e4_fold{fold}",
-            "data_root": "..",
+            "data_root": ".",
             "train_csv": f"data/cv_splits/train_fold{fold}.csv",
             "val_csv": f"data/cv_splits/val_fold{fold}.csv",
-            "test_csv": "../test_df.csv",
-            "train_images_dir": "../train_images_full_clean/train_images_full_clean",
-            "val_images_dir": "../train_images_full_clean/train_images_full_clean",
-            "test_images_dir": "../test_images/test_images",
+            "test_csv": "test_df.csv",
+            "train_images_dir": "train_images_full_clean/train_images_full_clean",
+            "val_images_dir": "train_images_full_clean/train_images_full_clean",
+            "test_images_dir": "test_images/test_images",
             "num_classes": 20,
             "min_ratio": 0.0,
             "model_name": "convnext_base",
